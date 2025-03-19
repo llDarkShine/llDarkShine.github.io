@@ -3,16 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Steady-State Drug Calculator</title>
+    <title>Dutasteride Steady-State Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h2>Steady-State Drug Concentration Calculator</h2>
-    <label>Dose (mg): </label><input type="number" id="dose"><br>
-    <label>Bioavailability (F): </label><input type="number" id="bioavailability" value="1"><br>
-    <label>Dosing Interval (hr): </label><input type="number" id="interval"><br>
-    <label>Clearance (L/hr): </label><input type="number" id="clearance"><br>
+    <h2>Dutasteride Steady-State Concentration Calculator</h2>
+    <label>Dose (mg): </label><input type="number" id="dose" value="0.5"><br>
+    <label>Bioavailability (F): </label><input type="number" id="bioavailability" value="0.6"><br>
+    <label>Dosing Interval (hours): </label><input type="number" id="interval" value="24"><br>
+    <label>Clearance (L/hr): </label><input type="number" id="clearance" value="0.58"><br>
+    <label>Half-Life (days): </label><input type="number" id="halfLife" value="35"><br>
+    <label>Loading Dose (Yes/No): </label><input type="checkbox" id="loadingDose"><br>
+    <label>Final Steady-State Concentration (mg/L): </label><input type="number" id="targetCss" value="0.05"><br>
+    <label>Weeks for Titration (optional): </label><input type="number" id="titrationWeeks" value="0"><br>
     <button onclick="calculateCss()">Calculate</button>
-    <h3>Steady-State Concentration: <span id="result"></span> mg/L</h3>
+    
+    <h3>Steady-State Concentration: <span id="result"></span> ng/mL</h3>
+    <h3>Loading Dose: <span id="loadingResult"></span> mg</h3>
+
+    <canvas id="concentrationChart" width="400" height="200"></canvas>
+    <canvas id="accumulationChart" width="400" height="200"></canvas>
 
     <script>
         function calculateCss() {
@@ -20,8 +30,95 @@
             let D = parseFloat(document.getElementById("dose").value);
             let tau = parseFloat(document.getElementById("interval").value);
             let CL = parseFloat(document.getElementById("clearance").value);
+            let halfLife = parseFloat(document.getElementById("halfLife").value);
+            let targetCss = parseFloat(document.getElementById("targetCss").value);
+            let titrationWeeks = parseInt(document.getElementById("titrationWeeks").value);
+            let loadingDose = document.getElementById("loadingDose").checked;
+
+            // Calculate steady-state concentration (Css)
             let Css = (F * D) / (tau * CL);
-            document.getElementById("result").innerText = Css.toFixed(2);
+            document.getElementById("result").innerText = (Css * 1000).toFixed(2);
+
+            // Calculate loading dose (if selected)
+            let Vd = 500; // Approximate Vd for dutasteride (L)
+            let loadingDoseAmount = loadingDose ? targetCss * Vd : 0;
+            document.getElementById("loadingResult").innerText = loadingDoseAmount.toFixed(2);
+
+            plotConcentrationOverTime(D, F, tau, CL, halfLife, Css, titrationWeeks, loadingDoseAmount);
+        }
+
+        function plotConcentrationOverTime(D, F, tau, CL, halfLife, Css, titrationWeeks, loadingDoseAmount) {
+            let k = Math.log(2) / (halfLife * 24); // Elimination rate constant
+            let timePoints = [];
+            let concentrations = [];
+            let accumulations = [];
+            let titrationDose = D;
+            let C = loadingDoseAmount;  // Start with loading dose if provided
+
+            let totalDoses = 100;  // Simulate ~100 days of therapy
+            let titrationStep = titrationWeeks ? (titrationWeeks * 7 * 24) / totalDoses : 0;
+
+            for (let t = 0; t <= totalDoses * tau; t += 24) {
+                if (t % tau === 0) {
+                    C += (F * titrationDose) / CL;
+                    // Increase dose gradually if titration is enabled
+                    if (titrationWeeks && t / 24 < titrationWeeks * 7) {
+                        titrationDose += (D / (titrationWeeks * 7 * 24)); // Gradual increase over weeks
+                    }
+                }
+                C *= Math.exp(-k * 24);  // Decay over 24 hours
+
+                timePoints.push(t);
+                concentrations.push(C * 1000); // Convert mg/L to ng/mL
+                accumulations.push((C / Css) * 100); // Accumulation percentage
+            }
+
+            // Create charts
+            let ctx1 = document.getElementById('concentrationChart').getContext('2d');
+            let ctx2 = document.getElementById('accumulationChart').getContext('2d');
+
+            if (window.concentrationChart) window.concentrationChart.destroy();
+            if (window.accumulationChart) window.accumulationChart.destroy();
+
+            window.concentrationChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: timePoints,
+                    datasets: [{
+                        label: 'Dutasteride Concentration (ng/mL)',
+                        data: concentrations,
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'Time (hours)' } },
+                        y: { title: { display: true, text: 'Concentration (ng/mL)' } }
+                    }
+                }
+            });
+
+            window.accumulationChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: timePoints,
+                    datasets: [{
+                        label: 'Accumulation % to Steady-State',
+                        data: accumulations,
+                        borderColor: 'red',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'Time (hours)' } },
+                        y: { title: { display: true, text: 'Accumulation (%)' }, min: 0, max: 100 }
+                    }
+                }
+            });
         }
     </script>
 </body>
