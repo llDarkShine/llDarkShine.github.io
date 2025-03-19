@@ -1,82 +1,281 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Drug Accumulation Calculator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drug Accumulation & Steady-State Calculator</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .dose-input { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-    #doseList { margin: 20px 0; }
-    #chart { margin-top: 20px; }
-    button { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #0056b3; }
+    /* Global Styles */
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #007bff;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+    }
+    /* Form Styles */
+    .input-group {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .input-group input,
+    .input-group button {
+      margin: 10px 5px;
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      width: calc(33% - 22px);
+      box-sizing: border-box;
+    }
+    .input-group button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    .input-group button:hover {
+      background-color: #0056b3;
+    }
+    .input-group input[type="text"] {
+      width: calc(33% - 22px);
+    }
+    /* Results Section */
+    #results {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      display: none;
+      border: 1px solid #ddd;
+    }
+    .result-item {
+      font-size: 16px;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .toggle-button {
+      display: inline-block;
+      margin-top: 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .toggle-button:hover {
+      background-color: #0056b3;
+    }
+    /* Chart Styles */
+    canvas {
+      max-width: 100%;
+      margin-top: 30px;
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    /* Mobile Adjustments */
+    @media (max-width: 768px) {
+      .input-group input,
+      .input-group button {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+      .container {
+        padding: 15px;
+      }
+      canvas {
+        width: 100% !important; /* Make canvas take full width on mobile */
+        height: auto !important; /* Adjust height based on screen */
+      }
+    }
+    /* For very small screens */
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 24px;
+      }
+      .input-group input,
+      .input-group button {
+        font-size: 14px;
+        padding: 8px;
+      }
+      .toggle-button {
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+      .result-item {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Drug Accumulation Calculator</h1>
-  <div class="dose-input">
-    <input type="text" id="drug" placeholder="Drug (e.g., Abilify)">
-    <input type="number" id="dose" placeholder="Dose (mg)" step="0.1">
-    <input type="number" id="halfLife" placeholder="Half-life (hours)">
-    <input type="number" id="interval" placeholder="Dosing Interval (hours)">
-    <input type="number" id="numDoses" placeholder="Number of Doses">
-    <button onclick="calculate()">Calculate</button>
+
+  <h1>Drug Accumulation & Steady-State Calculator</h1>
+
+  <div class="container">
+    <!-- Input Form -->
+    <div class="input-group">
+      <input type="text" id="drug" value="dutasteride" placeholder="Drug (e.g., Dutasteride)">
+      <input type="number" id="dose" value="0.5" placeholder="Dose (mg)" step="0.1">
+      <input type="number" id="halfLife" value="840" placeholder="Half-life (hours)">
+      <input type="number" id="interval" value="24" placeholder="Interval (hours)">
+      <input type="number" id="numDoses" value="90" placeholder="Number of Doses">
+      <button onclick="calculate()">Calculate</button>
+    </div>
+
+    <!-- Toggle Results Button -->
+    <button class="toggle-button" onclick="toggleResults()">Show Results</button>
+
+    <!-- Results Section -->
+    <div id="results">
+      <h3>Results for <span id="drugName">Dutasteride</span>:</h3>
+      <div class="result-item" id="maxSS24"></div>
+      <div class="result-item" id="minSS24"></div>
+      <div class="result-item" id="accum24"></div>
+      <div class="result-item" id="maxSS72"></div>
+      <div class="result-item" id="minSS72"></div>
+      <div class="result-item" id="accum72"></div>
+    </div>
+
+    <!-- Charts for 24hr and 72hr intervals -->
+    <h3>Concentration for 24-hour Dosing Interval</h3>
+    <canvas id="chart24"></canvas>
+
+    <h3>Concentration for 72-hour Dosing Interval</h3>
+    <canvas id="chart72"></canvas>
   </div>
 
-  <canvas id="chart"></canvas>
-
   <script>
-    let chart = null;
+    let chart24 = null;
+    let chart72 = null;
 
-    // Calculate and plot the drug concentration over time
     function calculate() {
+      // Get input values
       const drug = document.getElementById('drug').value;
       const dose = parseFloat(document.getElementById('dose').value);
       const halfLife = parseFloat(document.getElementById('halfLife').value);
       const interval = parseFloat(document.getElementById('interval').value);
       const numDoses = parseInt(document.getElementById('numDoses').value);
+      const totalTime = 260 * 24;  // 260 days in hours
 
+      // Input validation
       if (!drug || isNaN(dose) || isNaN(halfLife) || isNaN(interval) || isNaN(numDoses)) {
-        alert("Please fill in all fields correctly.");
+        alert("Please fill all fields correctly!");
         return;
       }
 
-      const eliminationConstant = Math.log(2) / halfLife; // k = ln(2) / t½
-      const timePoints = Array.from({ length: interval * numDoses }, (_, i) => i); // Time points in hours
-      const concentrations = new Array(timePoints.length).fill(0);
+      const k = Math.log(2) / halfLife; // Elimination rate constant
 
-      // Simulate each dose and its contribution to the concentration over time
+      // Initialize concentration arrays for both intervals
+      const concentrations24 = new Array(totalTime).fill(0);
+      const concentrations72 = new Array(totalTime).fill(0);
+
+      // Simulate multiple doses for 24-hour interval
       for (let doseNum = 0; doseNum < numDoses; doseNum++) {
-        const doseTime = doseNum * interval; // Time when this dose is administered
-        for (let t = 0; t < timePoints.length; t++) {
-          if (timePoints[t] >= doseTime) {
-            const timeSinceDose = timePoints[t] - doseTime;
-            concentrations[t] += dose * Math.exp(-eliminationConstant * timeSinceDose);
-          }
+        const administrationTime24 = doseNum * interval;
+        for (let t = administrationTime24; t < totalTime; t++) {
+          concentrations24[t] += dose * Math.exp(-k * (t - administrationTime24));
         }
       }
 
-      // Plot the results
-      if (chart) chart.destroy();
-      const ctx = document.getElementById('chart').getContext('2d');
-      chart = new Chart(ctx, {
+      // Simulate multiple doses for 72-hour interval
+      for (let doseNum = 0; doseNum < numDoses; doseNum++) {
+        const administrationTime72 = doseNum * 72;
+        for (let t = administrationTime72; t < totalTime; t++) {
+          concentrations72[t] += dose * Math.exp(-k * (t - administrationTime72));
+        }
+      }
+
+      // Calculate steady-state concentrations for both intervals
+      const cMaxSS24 = dose / (1 - Math.exp(-k * interval));
+      const cMinSS24 = cMaxSS24 * Math.exp(-k * interval);
+
+      const cMaxSS72 = dose / (1 - Math.exp(-k * 72));
+      const cMinSS72 = cMaxSS72 * Math.exp(-k * 72);
+
+      // Display results
+      document.getElementById('drugName').innerText = drug;
+      document.getElementById('maxSS24').innerText = `Steady-State Maximum (C_max,ss) for 24-hour interval: ${cMaxSS24.toFixed(2)} mg`;
+      document.getElementById('minSS24').innerText = `Steady-State Minimum (C_min,ss) for 24-hour interval: ${cMinSS24.toFixed(2)} mg`;
+      document.getElementById('accum24').innerText = `Accumulation Ratio for 24-hour interval: ${(cMaxSS24 / dose).toFixed(2)}`;
+      
+      document.getElementById('maxSS72').innerText = `Steady-State Maximum (C_max,ss) for 72-hour interval: ${cMaxSS72.toFixed(2)} mg`;
+      document.getElementById('minSS72').innerText = `Steady-State Minimum (C_min,ss) for 72-hour interval: ${cMinSS72.toFixed(2)} mg`;
+      document.getElementById('accum72').innerText = `Accumulation Ratio for 72-hour interval: ${(cMaxSS72 / dose).toFixed(2)}`;
+
+      // Update chart for 24-hour interval
+      if (chart24) chart24.destroy();
+      chart24 = new Chart(document.getElementById('chart24'), {
         type: 'line',
         data: {
-          labels: timePoints.map(t => `${Math.floor(t / 24)}d ${t % 24}h`),
+          labels: Array.from({length: totalTime}, (_, i) => `${Math.floor(i/24)}d ${i%24}h`),
           datasets: [{
-            label: `${drug} Concentration (mg)`,
-            data: concentrations,
-            borderColor: 'rgb(75, 192, 192)',
-            fill: false
+            label: `${drug} Concentration (mg) - 24hr interval`,
+            data: concentrations24,
+            borderColor: '#007bff',
+            fill: false,
+            lineTension: 0.1,
+            borderWidth: 2
           }]
         },
         options: {
+          responsive: true,
           scales: {
-            x: { title: { display: true, text: 'Time' } },
+            x: { title: { display: true, text: 'Time' }, ticks: { autoSkip: true, maxTicksLimit: 20 }},
             y: { title: { display: true, text: 'Concentration (mg)' } }
           }
         }
       });
+
+      // Update chart for 72-hour interval
+      if (chart72) chart72.destroy();
+      chart72 = new Chart(document.getElementById('chart72'), {
+        type: 'line',
+        data: {
+          labels: Array.from({length: totalTime}, (_, i) => `${Math.floor(i/24)}d ${i%24}h`),
+          datasets: [{
+            label: `${drug} Concentration (mg) - 72hr interval`,
+            data: concentrations72,
+            borderColor: '#ff5733',
+            fill: false,
+            lineTension: 0.1,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'Time' }, ticks: { autoSkip: true, maxTicksLimit: 20 }},
+            y: { title: { display: true, text: 'Concentration (mg)' } }
+          }
+        }
+      });
+    }
+
+    function toggleResults() {
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.style.display = (resultsDiv.style.display === 'none') ? 'block' : 'none';
+    }
+
+    // Default calculate when the page loads
+    window.onload = function() {
+      calculate();
     }
   </script>
 </body>
