@@ -1,75 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Drug Half-Life Calculator</title>
+  <title>Drug Accumulation Calculator</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    .dose-input { margin: 10px 0; padding: 10px; border: 1px solid #ddd; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .dose-input { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    #doseList { margin: 20px 0; }
     #chart { margin-top: 20px; }
+    button { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
   </style>
 </head>
 <body>
+  <h1>Drug Accumulation Calculator</h1>
   <div class="dose-input">
     <input type="text" id="drug" placeholder="Drug (e.g., Abilify)">
     <input type="number" id="dose" placeholder="Dose (mg)" step="0.1">
     <input type="number" id="halfLife" placeholder="Half-life (hours)">
-    <input type="number" id="timeSinceDose" placeholder="Time since dose (hours)">
-    <button onclick="addDose()">Add Dose</button>
+    <input type="number" id="interval" placeholder="Dosing Interval (hours)">
+    <input type="number" id="numDoses" placeholder="Number of Doses">
+    <button onclick="calculate()">Calculate</button>
   </div>
 
-  <div id="doseList"></div>
-  <button onclick="calculate()">Calculate</button>
   <canvas id="chart"></canvas>
 
   <script>
-    let doses = [];
     let chart = null;
 
-    function addDose() {
+    // Calculate and plot the drug concentration over time
+    function calculate() {
       const drug = document.getElementById('drug').value;
       const dose = parseFloat(document.getElementById('dose').value);
       const halfLife = parseFloat(document.getElementById('halfLife').value);
-      const timeSinceDose = parseFloat(document.getElementById('timeSinceDose').value);
+      const interval = parseFloat(document.getElementById('interval').value);
+      const numDoses = parseInt(document.getElementById('numDoses').value);
 
-      doses.push({ drug, dose, halfLife, timeSinceDose });
-      updateDoseList();
-    }
+      if (!drug || isNaN(dose) || isNaN(halfLife) || isNaN(interval) || isNaN(numDoses)) {
+        alert("Please fill in all fields correctly.");
+        return;
+      }
 
-    function calculate() {
-      const timePoints = Array.from({ length: 168 }, (_, i) => i); // 7 days
-      const concentrations = timePoints.map(t => 
-        doses.reduce((sum, dose) => {
-          const totalTime = dose.timeSinceDose + t;
-          return totalTime >= 0 ? 
-            sum + dose.dose * Math.pow(0.5, totalTime / dose.halfLife) : 
-            sum;
-        }, 0)
-      );
+      const eliminationConstant = Math.log(2) / halfLife; // k = ln(2) / t½
+      const timePoints = Array.from({ length: interval * numDoses }, (_, i) => i); // Time points in hours
+      const concentrations = new Array(timePoints.length).fill(0);
 
+      // Simulate each dose and its contribution to the concentration over time
+      for (let doseNum = 0; doseNum < numDoses; doseNum++) {
+        const doseTime = doseNum * interval; // Time when this dose is administered
+        for (let t = 0; t < timePoints.length; t++) {
+          if (timePoints[t] >= doseTime) {
+            const timeSinceDose = timePoints[t] - doseTime;
+            concentrations[t] += dose * Math.exp(-eliminationConstant * timeSinceDose);
+          }
+        }
+      }
+
+      // Plot the results
       if (chart) chart.destroy();
-      chart = new Chart(document.getElementById('chart'), {
+      const ctx = document.getElementById('chart').getContext('2d');
+      chart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: timePoints.map(t => `${Math.floor(t/24)}d ${t%24}h`),
+          labels: timePoints.map(t => `${Math.floor(t / 24)}d ${t % 24}h`),
           datasets: [{
-            label: 'Total Drug Concentration (mg)',
+            label: `${drug} Concentration (mg)`,
             data: concentrations,
-            borderColor: 'rgb(75, 192, 192)'
+            borderColor: 'rgb(75, 192, 192)',
+            fill: false
           }]
+        },
+        options: {
+          scales: {
+            x: { title: { display: true, text: 'Time' } },
+            y: { title: { display: true, text: 'Concentration (mg)' } }
+          }
         }
       });
-    }
-
-    function updateDoseList() {
-      document.getElementById('doseList').innerHTML = doses
-        .map((dose, i) => `
-          <div>Dose ${i+1}: 
-            ${dose.drug} ${dose.dose}mg, 
-            t½=${dose.halfLife}h, 
-            taken ${dose.timeSinceDose}h ago
-          </div>
-        `).join('');
     }
   </script>
 </body>
