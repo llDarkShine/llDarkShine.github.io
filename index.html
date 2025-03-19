@@ -3,225 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CBD & Anxiety: Clinical Review | Neuropharmacology</title>
-    <style>
-        :root {
-            --primary: #3A5F49;
-            --secondary: #6B8E7E;
-            --accent: #9CBD9E;
-            --light: #F4F9F4;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            line-height: 1.8;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
-            color: #333;
-        }
-
-        header {
-            text-align: center;
-            padding: 4rem 2rem;
-            margin-bottom: 3rem;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            font-size: 2.8rem;
-            font-weight: 300;
-            margin-bottom: 1rem;
-            letter-spacing: -0.5px;
-        }
-
-        h2 {
-            color: var(--primary);
-            margin: 3rem 0 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 3px solid var(--accent);
-            font-weight: 600;
-        }
-
-        .abstract {
-            background: var(--light);
-            padding: 2rem;
-            border-left: 5px solid var(--secondary);
-            margin: 3rem 0;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-
-        .mechanisms-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-
-        .mechanism-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease;
-        }
-
-        .mechanism-card:hover {
-            transform: translateY(-5px);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 2rem 0;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-
-        th, td {
-            padding: 1.2rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background: var(--primary);
-            color: white;
-            font-weight: 500;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-
-        .reference-list {
-            background: var(--light);
-            padding: 2rem;
-            border-radius: 12px;
-            margin-top: 3rem;
-        }
-
-        .reference-list ol {
-            list-style: none;
-            counter-reset: ref-counter;
-            padding-left: 0;
-        }
-
-        .reference-list li {
-            counter-increment: ref-counter;
-            margin-bottom: 1.5rem;
-            padding-left: 2.5rem;
-            position: relative;
-        }
-
-        .reference-list li::before {
-            content: "[" counter(ref-counter) "]";
-            position: absolute;
-            left: 0;
-            color: var(--secondary);
-            font-weight: bold;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-            
-            body {
-                padding: 20px 15px;
-            }
-        }
-
-        .chemical-formula {
-            font-family: 'Courier New', monospace;
-            background: #f8f9fa;
-            padding: 0.3em 0.6em;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-        }
-
-        .stat-highlight {
-            color: var(--secondary);
-            font-weight: 600;
-            font-size: 1.1em;
-        }
-    </style>
+    <title>Steady-State Drug Calculator</title>
 </head>
 <body>
-    <header>
-        <h1>Cannabidiol in Anxiety Disorders</h1>
-        <p>Systematic Review of Pharmacological Mechanisms & Clinical Evidence</p>
-    </header>
+    <h2>Steady-State Drug Concentration Calculator</h2>
+    <label>Dose (mg): </label><input type="number" id="dose"><br>
+    <label>Bioavailability (F): </label><input type="number" id="bioavailability" value="1"><br>
+    <label>Dosing Interval (hr): </label><input type="number" id="interval"><br>
+    <label>Clearance (L/hr): </label><input type="number" id="clearance"><br>
+    <button onclick="calculateCss()">Calculate</button>
+    <h3>Steady-State Concentration: <span id="result"></span> mg/L</h3>
 
-    <div class="abstract">
-        <h2>Abstract</h2>
-        <p><span class="chemical-formula">C₂₁H₃₀O₂</span> – Cannabidiol (CBD), a non-competitive negative allosteric modulator of the CB<sub>1</sub> receptor, demonstrates significant anxiolytic potential across preclinical and clinical models. This review synthesizes findings from 27 randomized controlled trials (n=2,381) examining CBD's dose-response relationship, neural correlates (fMRI, PET), and comparative efficacy against first-line pharmacotherapies. Current evidence suggests acute anxiolytic effects (Cohen's <em>d</em> = 0.61, 95% CI 0.42-0.80) with distinct mechanism profile from traditional benzodiazepines.</p>
-    </div>
-
-    <section>
-        <h2>Neuropharmacological Mechanisms</h2>
-        <div class="mechanisms-grid">
-            <div class="mechanism-card">
-                <h3>Serotonergic Modulation</h3>
-                <p>5-HT<sub>1A</sub> receptor agonism (K<sub>i</sub> = 16 nM) enhances prefrontal cortex synaptic plasticity through increased ERK phosphorylation</p>
-            </div>
-            
-            <div class="mechanism-card">
-                <h3>Endocannabinoid Regulation</h3>
-                <p>FAAH inhibition (IC<sub>50</sub> = 15 μM) increases anandamide levels (AEA ↑38%, <em>p</em> < 0.01) in amygdala synaptic clefts</p>
-            </div>
-
-            <div class="mechanism-card">
-                <h3>Neural Circuit Modulation</h3>
-                <p>Reduces BOLD signal in amygdala (x = -24, y = -6, z = -18) during threat anticipation tasks (Hedges' <em>g</em> = 0.72)</p>
-            </div>
-        </div>
-    </section>
-
-    <section>
-        <h2>Clinical Efficacy Data</h2>
-        <table>
-            <tr>
-                <th>Study Design</th>
-                <th>Dosage</th>
-                <th>Outcome</th>
-                <th>Effect Size</th>
-            </tr>
-            <tr>
-                <td>RCT, GAD (n=103)</td>
-                <td>300 mg/day × 4wk</td>
-                <td>HAM-A ↓39%</td>
-                <td class="stat-highlight">d = 0.68</td>
-            </tr>
-            <tr>
-                <td>Crossover, SAD (n=37)</td>
-                <td>600 mg acute</td>
-                <td>SUDS ↓44%</td>
-                <td class="stat-highlight">η² = 0.29</td>
-            </tr>
-            <tr>
-                <td>Open-label, PTSD (n=11)</td>
-                <td>25-175 mg/day</td>
-                <td>CAPS-5 ↓28%</td>
-                <td class="stat-highlight">r = 0.51</td>
-            </tr>
-        </table>
-    </section>
-
-    <div class="reference-list">
-        <h2>References</h2>
-        <ol>
-            <li>Linares IM, et al. (2019). Cannabidiol presents an inverted U-shaped dose-response curve in a simulated public speaking test. Brazilian Journal of Psychiatry.</li>
-            <li>Blessing EM, et al. (2015). Cannabidiol as a Potential Treatment for Anxiety Disorders. Neurotherapeutics.</li>
-            <li>Masataka N. (2019). Anxiolytic Effects of Repeated Cannabidiol Treatment in Teenagers With Social Anxiety Disorders. Frontiers in Psychology.</li>
-        </ol>
-    </div>
+    <script>
+        function calculateCss() {
+            let F = parseFloat(document.getElementById("bioavailability").value);
+            let D = parseFloat(document.getElementById("dose").value);
+            let tau = parseFloat(document.getElementById("interval").value);
+            let CL = parseFloat(document.getElementById("clearance").value);
+            let Css = (F * D) / (tau * CL);
+            document.getElementById("result").innerText = Css.toFixed(2);
+        }
+    </script>
 </body>
 </html>
